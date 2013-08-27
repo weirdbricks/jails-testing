@@ -2,7 +2,10 @@
  
 #08/27/2013
 #Lampros for WeirdBricks
- 
+
+clear
+echo "Doing basic configuration..." 
+
 #check if curl exists
 if ( -e `which curl` ) then
   echo "OK: Curl exists"
@@ -45,4 +48,4 @@ else
   ln -s /usr/local/bin/irb19 /usr/local/bin/irb
 endif
 
- 
+
