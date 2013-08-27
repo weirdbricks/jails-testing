@@ -29,10 +29,20 @@ else
   pkg_add ftp://ftp.freebsd.org/pub/FreeBSD/ports/i386/packages-9.1-release/All/$ruby_package
 endif
 
-#check if symlink is in place
+#check if symlink for ruby is in place
 if ( -l /usr/local/bin/ruby ) then
   echo "OK: Ruby Symlink exists"
 else
   echo "ERROR: Ruby Symlink doesn't exist - adding symlink"
   ln -s /usr/local/bin/ruby19 /usr/local/bin/ruby
-endif 
+endif
+
+#check if symlink for irb is in place
+if ( -l /usr/local/bin/irb ) then
+  echo "OK: irb Symlink exists"
+else
+  echo "ERROR: irb Symlink doesn't exist - adding symlink"
+  ln -s /usr/local/bin/irb19 /usr/local/bin/irb
+endif
+
+ 
