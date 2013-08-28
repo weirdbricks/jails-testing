@@ -1,41 +1,47 @@
 #!/usr/bin/env ruby
 #08/27/2013
 #Lampros for WeirdBricks
-
+system("clear")
 #----set variables for testing----#
 jails_requested=3
 jail_family_name="ran-tan-plan"
 #
 #----set variables for testing----#
 
-puts "--Ruby taking over--"
+puts "--Ruby taking over-- WE'RE TAKING OVER THIS TOWN...!"
 
+#get ethernet devices from dmesg
 eth_devices=`dmesg | grep -i eth | awk '{print $1}' | awk 'gsub ( ":","" )'`.split( /\r?\n/ )
 puts "Found #{eth_devices.count}:#{eth_devices}"
 
+#get the default route device 
 default_route_device=`netstat -rn | grep default | awk '{print $6}'`.strip
 puts "Default Route Device is: #{default_route_device}"
 
+#make sure that the default route device matches the ethernet devices we found - sanity check
 if eth_devices.include? default_route_device
 	puts "OK: default route device #{default_route_device} matches found devices"
 else
-	puts "ERROR: default route device #{default_route_device} not included in the above found devices"
+	abort "ERROR: default route device #{default_route_device} not included in the above found devices"
 end
 
+#cool - now grab the current ip address of that device
 ip_address=`ifconfig #{default_route_device} | grep inet | awk '{print $2}'`.strip
 puts "ipaddress of default_destination_device is #{ip_address}"
 
-#test ipaddress for space
+#test ipaddress for space (in case the number is high!)
 last_octet=ip_address.split('.')[3].to_i+1
 if last_octet+jails_requested > 255
 	abort "ERROR: not enough ip address space!"
 else
-	puts "OK: There is enough IP address space to proceed with testing - assigning IPS"
+	puts "OK: There is enough IP address space to proceed with testing - assigning IPs"
 end
 
+#put together the xxx.xxx.xxx. part so we can later add the 4th octet
 ip_address_without_last_octet=ip_address.split('.')[0]+"."+ip_address.split('.')[1]+"."+ip_address.split('.')[2]+"."
 puts "IP Address without the last octet is #{ip_address_without_last_octet}"
 
+#put the ip addresses we're going to use into the array jails_ips
 ip_address_up_to=last_octet+jails_requested-1
 jails_ips=Array.new
 puts "Generating IP Addresses for test jails.."
@@ -44,6 +50,7 @@ for i in last_octet..ip_address_up_to
 	  jails_ips << ip_address_without_last_octet+i.to_s
 end
 
+#check if we have all the packages/configuratioon we need for ezjail-admin (package: ezjail)
 puts "Checking for Jails dependencies.."
 if (`pkg_info | grep ezjail | wc -l | grep -v grep | grep -v ruby`.strip.to_i == 0)
 	puts "ERROR: ezjail not installed.. installing"
@@ -80,7 +87,9 @@ end
 
 puts "Jails dependencies complete - creating jails.."
 
+#function that creates a jail
 def create_jail name, jail_ip_address
+	
 	system("ezjail-admin create #{name} '#{jail_ip_address}'")
 end
 

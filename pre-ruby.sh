@@ -66,4 +66,5 @@ endif
 
 echo "--PRE-RUBY CONFIGURATION COMPLETE -- ATTEMPTING TO FETCH RUBY HANDOFF SCRIPT...--"
 set ruby_script=https://raw.github.com/weirdbricks/jails-testing/master/ruby-handoff.rb
+sleep 2
 fetch -q -o - $ruby_script | ruby
