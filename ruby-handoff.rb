@@ -3,7 +3,7 @@
 #Lampros for WeirdBricks
 system("clear")
 #----set variables for testing----#
-jails_requested=3
+jails_requested=2
 jail_family_name="ran-tan-plan"
 #
 #----set variables for testing----#
@@ -27,14 +27,21 @@ end
 
 #cool - now grab the current ip address of that device
 ip_address=`ifconfig #{default_route_device} | grep inet | awk '{print $2}'`.strip
+
 puts "ipaddress of default_destination_device is #{ip_address}"
 
-#now fix sshd_config so jails don't complain
-#`awk '{ gsub("#ListenAddress 0.0.0.0",\"ListenAddress #{ip_address}\"" ) ; print }' /etc/ssh/sshd_config > /etc/ssh/sshd_config2`
-#echo "INFO: Replacing /etc/ssh/sshd_config so that host listens only to #{ip_address}"
-#`mv /etc/ssh/sshd_config /etc/ssh/sshd_config_backup`
-#`mv /etc/ssh/sshd_config2 /etc/ssh/sshd_config`
-#system("service sshd restart")
+filename = "/etc/ssh/sshd_config"
+if File.read(filename).include? "#ListenAddress 0.0.0.0"
+	puts "ERROR: #{filename} is set to listen to all interfaces: #ListenAddress 0.0.0.0.. modifying" 
+	`cp /etc/ssh/sshd_config /etc/ssh/sshd_config_backup`
+	text = File.read(filename) 
+	puts = text.gsub(/#ListenAddress 0.0.0.0/, "ListenAddress #{ip_address}")
+	File.open(filename, "w") { |file| file << puts }
+  	puts "INFO: Attempting to restart sshd..."
+	system("service sshd restart")
+elsif `sockstat -4 | grep -i ssh | grep -v grep | grep -c #{ip_address}`.strip.to_i == 1
+	puts "OK: sshd correctly configured for jails"
+end
 
 #test ipaddress for space (in case the number is high!)
 last_octet=ip_address.split('.')[3].to_i+1
