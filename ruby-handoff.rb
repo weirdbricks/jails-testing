@@ -29,6 +29,13 @@ end
 ip_address=`ifconfig #{default_route_device} | grep inet | awk '{print $2}'`.strip
 puts "ipaddress of default_destination_device is #{ip_address}"
 
+#now fix sshd_config so jails don't complain
+#`awk '{ gsub("#ListenAddress 0.0.0.0",\"ListenAddress #{ip_address}\"" ) ; print }' /etc/ssh/sshd_config > /etc/ssh/sshd_config2`
+#echo "INFO: Replacing /etc/ssh/sshd_config so that host listens only to #{ip_address}"
+#`mv /etc/ssh/sshd_config /etc/ssh/sshd_config_backup`
+#`mv /etc/ssh/sshd_config2 /etc/ssh/sshd_config`
+#system("service sshd restart")
+
 #test ipaddress for space (in case the number is high!)
 last_octet=ip_address.split('.')[3].to_i+1
 if last_octet+jails_requested > 255
@@ -88,16 +95,16 @@ end
 puts "Jails dependencies complete - creating jails.."
 
 #function that creates a jail
-def create_jail name, jail_ip_address
+def create_jail name, jail_ip_address, default_route_device
 	system("ezjail-admin create #{name} '#{jail_ip_address}'")
-        system("ifconfig #{default_route_device} alias #{jail_ip_address}" netmask 0xffffff00)
+        system("ifconfig #{default_route_device} alias #{jail_ip_address} netmask 0xffffff00")
 	system("cp /etc/resolv.conf /usr/jails/#{name}/etc/resolv.conf")
-	system("echo "sshd_enable=YES" > /usr/jails/#{name}/etc/rc.conf")
+	system("echo \"sshd_enable=YES\" > /usr/jails/#{name}/etc/rc.conf")
 	puts "attempting to start jail: #{name}"
 	system("ezjail-admin start #{name}")
 end
 
 jails_ips.each do |jail_ip|
 	jail_name=jail_family_name+jail_ip.split('.')[3]
-	create_jail jail_name, jail_ip
+	create_jail jail_name, jail_ip, default_route_device
 end
