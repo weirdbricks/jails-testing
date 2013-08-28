@@ -89,8 +89,12 @@ puts "Jails dependencies complete - creating jails.."
 
 #function that creates a jail
 def create_jail name, jail_ip_address
-	
 	system("ezjail-admin create #{name} '#{jail_ip_address}'")
+        system("ifconfig #{default_route_device} alias #{jail_ip_address}" netmask 0xffffff00)
+	system("cp /etc/resolv.conf /usr/jails/#{name}/etc/resolv.conf")
+	system("echo "sshd_enable=YES" > /usr/jails/#{name}/etc/rc.conf")
+	puts "attempting to start jail: #{name}"
+	system("ezjail-admin start #{name}")
 end
 
 jails_ips.each do |jail_ip|
