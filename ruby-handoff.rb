@@ -88,6 +88,3 @@ jails_ips.each do |jail_ip|
 	jail_name=jail_family_name+jail_ip.split('.')[3]
 	create_jail jail_name, jail_ip
 end
-
-
-
