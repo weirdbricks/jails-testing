@@ -141,11 +141,16 @@ def create_jail name, jail_ip_address, default_route_device
         system("ifconfig #{default_route_device} alias #{jail_ip_address} netmask 0xffffff00")
 	system("cp /etc/resolv.conf /usr/jails/#{name}/etc/resolv.conf")
 	system("echo \"sshd_enable=YES\" > /usr/jails/#{name}/etc/rc.conf")
+	Dir.mkdir( "/usr/jails/#{name}/root/.ssh", 700 ) 
+	host_public_key=File.read("/root/.ssh/id_rsa.pub")
+	open("/usr/jails/#{name}/root/.ssh/authorized_keys",'w') do |f|		
+		f.puts host_public_key
+	end
 	puts "attempting to start jail: #{name}"
 	system("ezjail-admin start #{name}")
 end
 
 jails_ips.each do |jail_ip|
 	jail_name=jail_family_name+jail_ip.split('.')[3]
-#	create_jail jail_name, jail_ip, default_route_device
+	create_jail jail_name, jail_ip, default_route_device
 end
