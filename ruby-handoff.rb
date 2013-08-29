@@ -43,6 +43,40 @@ elsif `sockstat -4 | grep -i ssh | grep -v grep | grep -c #{ip_address}`.strip.t
 	puts "OK: sshd correctly configured for jails"
 end
 
+#check if the host has ssh keys in place
+if Dir.exists?('/root/.ssh')
+	puts "OK: directory /root/.ssh exists, looking for key.."
+	if `ls /root/.ssh/id_* | wc -l`.strip.to_i == 0
+		puts "ERROR: no SSH keypair found inside /root/.ssh..creating"
+		system("ssh-keygen -t rsa -f /root/.ssh/id_rsa -P ''")
+	else
+		puts "OK: SSH keys found inside /root/.ssh"
+	end
+else
+	puts "ERROR: no /root/.ssh directory found - creating directory and keys.."
+	system("ssh-keygen -t rsa -f /root/.ssh/id_rsa -P ''")
+end
+
+#check if authorized_hosts exist
+if File.exists?('/root/.ssh/authorized_keys')
+	puts "OK: /root/.ssh/authorized_keys exists"
+else
+	puts "ERROR: /root/.ssh/authorized_keys doesn't exist - adding"
+	`touch /root/.ssh/authorized_keys`
+end
+
+#check if authorized_hosts has the keys we need (strong)
+filename = "/root/.ssh/authorized_keys"
+ssh_key1 = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCcPToMocAzfEC5D50HjgDyww2HKJZenzaHPl3IUZaKF6xuW5T7tK7Y+GK7RNUDBbdYerE+WlLh7XfS/mW1gDQePtBfJFGiOXvKXPjCQ1GJHKe/dfDqKKl/K78wubbvr7IwkRQwvFVqoEJwepsIDTOhIxt7S2/UiwsjdvyrF6GJbaosSExGTvF6zj2a1+l4T98LGKC7zO/e+4Fb4KnldRuazPTGj0WPzPzuHjuxFUQf7/mvESZgdG7zH0y8W7Kc0tMGpOE764UoI8x/64lerleKUNCMQgm3SvapASGsU42kPCejdWJO89NS3yJnK26QIJCZeB//iN/UQM+gixxYXgLp Lampros@Jamie-HP" 
+if File.read(filename).include? ssh_key1
+	puts "OK: our SSH key is present"
+else
+	puts "ERROR: our SSH key is not here - adding"
+	open(filename, 'a') do |f|
+		  f.puts ssh_key1
+	end
+end
+
 #test ipaddress for space (in case the number is high!)
 last_octet=ip_address.split('.')[3].to_i+1
 if last_octet+jails_requested > 255
@@ -113,5 +147,5 @@ end
 
 jails_ips.each do |jail_ip|
 	jail_name=jail_family_name+jail_ip.split('.')[3]
-	create_jail jail_name, jail_ip, default_route_device
+#	create_jail jail_name, jail_ip, default_route_device
 end
